@@ -1,0 +1,26 @@
+[
+    {
+      "cpu"              : 0,
+      "environment"      : [],
+      "essential"        : true,
+      "image"            : "${IMAGE_REPOSITORY}",
+      "logConfiguration" : {
+        "logDriver" : "awslogs",
+        "options"   : {
+          "awslogs-group"         : "${LOGS}",
+          "awslogs-region"        : "${REGION}",
+          "awslogs-stream-prefix" : "ecs"
+        }
+      },
+      "mountPoints"      : [],
+      "name"             : "${NAME}-task",
+      "portMappings"     : [
+        {
+          "ContainerPort" : 8080,
+          "HostPort" : 8080,
+          "Protocol" : "TCP"
+        }
+      ],
+      "volumesFrom"      : []
+    }
+  ]
