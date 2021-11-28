@@ -1,15 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Dict
 
+from fastapi import status, Request
 from fastapi.exceptions import HTTPException
-from starlette.requests import Request
-from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 
 class ThrottlingException(HTTPException):
     def __init__(self):
         super().__init__(
-            status_code=HTTP_429_TOO_MANY_REQUESTS,
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too Many Rquest",
             headers={"WWW-Authenticate": "Bearer"}
         )
@@ -17,7 +16,7 @@ class ThrottlingException(HTTPException):
 
 class RateLimit:
     def __init__(self, count: int,
-                 period: timedelta = timedelta(0, 60)) -> None:
+                 period: timedelta = timedelta(seconds=60)) -> None:
         self.count = count
         self.period = period
 
@@ -69,11 +68,20 @@ class gcraMemory(gcra):
 
 class Throttling():
 
-    def __init__(self, rt: RateLimit = RateLimit(2, timedelta(0, 60, 0, 0)),
-                 gcra: gcra = gcraMemory()) -> None:
+    def __init__(self,
+                 rt: RateLimit = RateLimit(2, timedelta(0, 60, 0, 0)),
+                 gcra: gcra = gcraMemory(), ) -> None:
         self.ratelimit = rt
         self.gcra = gcra
 
-    async def __call__(self, request: Request):
-        if self.gcra.update("gianafrancisco", self.ratelimit):
+    async def __call__(self, request: Request) -> None:
+        """
+        User ip address as a default key value.
+        But if user is authenticated, token will be used as a key
+        """
+        key = request.client.host
+        authorization: str = request.headers.get("Authorization")
+        if authorization:
+            _, _, key = authorization.partition(" ")
+        if self.gcra.update(key, self.ratelimit):
             raise ThrottlingException()
