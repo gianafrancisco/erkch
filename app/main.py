@@ -1,7 +1,6 @@
-from fastapi import Depends, FastAPI
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI
 
-from .routers import users, stocks, health
+from app.routers import users, stocks, health
 
 app = FastAPI()
 
