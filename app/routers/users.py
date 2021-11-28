@@ -79,4 +79,5 @@ async def signup_users(form_data: SignUpForm = Depends()):
 
 @router.post("/auth/logout")
 async def logout_users():
+    # TODO: Implement logout
     return {}
