@@ -31,6 +31,12 @@ debug:
 run:
 	docker run --rm -it -p 18080:8080 eureka-api:latest
 
+test-debug:
+	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest -s tests/
+
+test: build
+	docker run --rm -it eureka-api:latest pytest test/
+
 clean:
 	docker rmi eureka-api:latest
 	docker rmi $(docker_io_image)
