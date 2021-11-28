@@ -3,12 +3,14 @@ from typing import Optional
 from pydantic import BaseModel
 from fastapi import Form
 
+
 class User(BaseModel):
     username: str
     email: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     disabled: Optional[bool] = None
+
 
 class UserInDB(User):
     hashed_password: str

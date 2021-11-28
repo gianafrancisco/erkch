@@ -5,6 +5,7 @@ from fastapi.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
+
 class ThrottlingException(HTTPException):
     def __init__(self):
         super().__init__(
@@ -13,8 +14,10 @@ class ThrottlingException(HTTPException):
             headers={"WWW-Authenticate": "Bearer"}
         )
 
+
 class RateLimit:
-    def __init__(self, count: int, period: timedelta = timedelta(0, 60)) -> None:
+    def __init__(self, count: int,
+                 period: timedelta = timedelta(0, 60)) -> None:
         self.count = count
         self.period = period
 
@@ -32,7 +35,7 @@ class gcra:
     def get_tat(self, key: str) -> datetime:
         # This should return a previous tat for the key or the current time.
         pass
-        
+
     def set_tat(self, key: str, tat: datetime) -> None:
         pass
 
@@ -63,9 +66,11 @@ class gcraMemory(gcra):
     def set_tat(self, key: str, tat: datetime) -> None:
         self.sessions[key] = tat
 
+
 class Throttling():
 
-    def __init__(self, rt: RateLimit = RateLimit(2, timedelta(0, 60, 0, 0)), gcra: gcra = gcraMemory()) -> None:
+    def __init__(self, rt: RateLimit = RateLimit(2, timedelta(0, 60, 0, 0)),
+                 gcra: gcra = gcraMemory()) -> None:
         self.ratelimit = rt
         self.gcra = gcra
 

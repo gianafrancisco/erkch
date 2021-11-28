@@ -1,4 +1,3 @@
-from datetime import timedelta
 import requests
 from fastapi import APIRouter, Depends
 
@@ -19,4 +18,3 @@ url = '{}?' \
 async def get_stocks():
     r = requests.get(url)
     return r.json()
-
