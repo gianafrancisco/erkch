@@ -56,8 +56,10 @@ async def signin_users(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 @router.get("/auth/me")
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
+async def read_users_me(current_user: UserInDB = Depends(
+        get_current_active_user)):
+    user = User(**current_user.dict())
+    return user
 
 
 @router.post("/auth/signup")
