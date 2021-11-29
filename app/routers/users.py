@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.models.user import User, UserInDB, SignUpForm
@@ -41,11 +41,11 @@ async def signin_users(form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         user = db.get(form_data.username)
     except UserNotFoundException:
-        raise HTTPException(status_code=400,
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
     if not verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(status_code=400,
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
