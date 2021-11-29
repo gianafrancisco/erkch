@@ -5,15 +5,57 @@ from pytest import fixture, mark
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.helper.database import db
+from app.models.user import UserInDB
+from app.helper.auth import get_password_hash
 
-FAKE_USER = {
-    "fake_user_1": {
+MOCK_USER = {
+    "signup_user@gmail.com": {
+        "username": "signup_user@gmail.com",
         "first_name": "Francisco",
         "last_name": "Giana",
-        "email": "fake_user@gmail.com",
+        "email": "signup_user@gmail.com",
         "password": "secret"
+    },
+    "valid-user@email.com": {
+        "username": "valid-user@email.com",
+        "first_name": "Francisco",
+        "last_name": "Giana",
+        "email": "valid-user@email.com",
+        "hashed_password": get_password_hash("valid-password"),
+        "disabled": False,
+    },
+    "login@email.com": {
+        "username": "login@email.com",
+        "first_name": "Francisco",
+        "last_name": "Giana",
+        "email": "login@email.com",
+        "hashed_password": get_password_hash("valid-password"),
+        "password": "valid-password",
+        "disabled": False,
+    },
+    "disabled@email.com": {
+        "username": "disabled@email.com",
+        "first_name": "Francisco",
+        "last_name": "Giana",
+        "email": "disabled@email.com",
+        "hashed_password": get_password_hash("valid-password"),
+        "disabled": True,
     }
 }
+
+
+def _login(client, username):
+    user = MOCK_USER.get(username)
+    response = client.post(
+        "/auth/signin",
+        data={
+                "username": user.get("username"),
+                "password": user.get("password")
+            }
+    )
+    assert response.status_code == 200
+    return response.json()['token_type'], response.json()['access_token']
 
 
 @fixture()
@@ -22,24 +64,49 @@ def client():
 
 
 @fixture()
-def login(client):
-    response = client.post(
-        "/auth/signin",
-        data={"username": "gianafrancisco@gmail.com", "password": "secret"}
-    )
-    assert response.status_code == 200
-    return response.json()['token_type'], response.json()['access_token']
+def login(client, create_users, username="login@email.com"):
+    return _login(client, username)
+
+
+@fixture(scope="session")
+def create_users():
+    db.add(UserInDB(**MOCK_USER.get('valid-user@email.com')))
+    db.add(UserInDB(**MOCK_USER.get('login@email.com')))
+    db.add(UserInDB(**MOCK_USER.get('disabled@email.com')))
 
 
 def test_signup(client):
 
     response = client.post(
             "/auth/signup",
-            data=FAKE_USER["fake_user_1"]
+            data=MOCK_USER["signup_user@gmail.com"]
         )
 
     assert response.status_code == 200
     assert response.json() == {}
+
+    token_type, access_token = _login(client, "signup_user@gmail.com")
+    assert token_type.lower() == "bearer"
+    assert access_token is not None
+
+
+@mark.parametrize(
+    "username, password, expected",
+    [
+        ("non-exist-user", "test1", 401),
+        ("valid-user@email.com", "valid-password", 200),
+    ]
+)
+def test_signin(client, create_users, username, password, expected):
+
+    response = client.post(
+            "/auth/signin",
+            data={"username": username, "password": password}
+        )
+
+    assert response.status_code == expected
+    if expected == 401:
+        assert response.json() == {'detail': 'Incorrect username or password'}
 
 
 def test_me(client, login):
@@ -51,14 +118,15 @@ def test_me(client, login):
 
     assert response.status_code == 200
     assert response.json() == {
-        "username": "gianafrancisco@gmail.com",
-        "email": "gianafrancisco@gmail.com",
+        "username": "login@email.com",
+        "email": "login@email.com",
         "first_name": "Francisco",
         "last_name": "Giana",
         "disabled": False
     }
 
 
+# @mark.skip()
 @mark.parametrize(
     "requests, delta, throttling",
     [
