@@ -160,18 +160,18 @@ def test_me(client, login):
     }
 
 
-@mark.skip()
+# @mark.skip()
 @mark.parametrize(
     "requests, delta, throttling",
     [
-        (10, 60, True),
-        (4, 60, False)
+        (5, 1/4, True),
+        (4, 1/4, False)
     ]
 )
 def test_throttling(client, login, requests, delta, throttling):
     _, access_token = login
 
-    sleep(60)  # Wait 60 seconds to reset the throlling
+    sleep(2)  # Wait 60 seconds to reset the throlling
     i = 0
     while i < requests:
         response = client.get(
@@ -183,12 +183,10 @@ def test_throttling(client, login, requests, delta, throttling):
             break
         sleep(delta/requests)
 
-    if i == requests:
-        assert response.status_code == 200
-        assert throttling is False
-    else:
+    if throttling:
         assert response.status_code == 429
-        assert throttling is True
+    else:
+        assert response.status_code == 200
 
 
 def test_health_check(client):

@@ -16,7 +16,7 @@ class ThrottlingException(HTTPException):
 
 class RateLimit:
     def __init__(self, count: int,
-                 period: timedelta = timedelta(seconds=60)) -> None:
+                 period: timedelta = timedelta(seconds=1)) -> None:
         self.count = count
         self.period = period
 

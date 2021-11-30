@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 import requests
 
-from app.config import API_KEY, API_URL
+from app.config import API_KEY, API_URL, RATE_LIMIT
 from app.helper.auth import get_current_user
 from app.helper.throttling import Throttling, RateLimit
 from app.helper.database import stock_db, StockNotFoundException
 
-throttling = Throttling(rt=RateLimit(4))
+throttling = Throttling(rt=RateLimit(RATE_LIMIT))
 
 router = APIRouter(dependencies=[Depends(get_current_user),
                    Depends(throttling)])

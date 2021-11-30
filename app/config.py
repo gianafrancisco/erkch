@@ -9,6 +9,11 @@ try:
                                                 15))
 except ValueError:
     ACCESS_TOKEN_EXPIRE_MINUTES = 15
+else:
+    if ACCESS_TOKEN_EXPIRE_MINUTES < 0:
+        ACCESS_TOKEN_EXPIRE_MINUTES == 15
 
 API_KEY = os.getenv("API_KEY", "X86NOH6II01P7R24")
 API_URL = os.getenv("API_URL", "https://www.alphavantage.co/query")
+
+RATE_LIMIT = 4
