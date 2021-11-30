@@ -55,6 +55,12 @@ async def signin_users(request: Request,
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
+    if user.disabled:
+        logger.warning(f"{request.client.host} - "
+                       f"Username {form_data.username} disabled")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Incorrect username or password")
+
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": form_data.username}, expires_delta=access_token_expires
