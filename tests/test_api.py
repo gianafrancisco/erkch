@@ -1,5 +1,5 @@
 from time import sleep
-
+from datetime import timedelta
 from pytest import fixture, mark
 
 from fastapi.testclient import TestClient
@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.helper.database import db
 from app.models.user import UserInDB
-from app.helper.auth import get_password_hash
+from app.helper.auth import get_password_hash, create_access_token
 
 MOCK_USER = {
     "signup_user@gmail.com": {
@@ -63,6 +63,7 @@ MSG_INCORRECT_USR_OR_PASS = {'detail': 'Incorrect username or password'}
 MSG_NOT_VALIDATE_CREDENTIALS = {'detail': 'Could not validate credentials'}
 MSG_USR_EXIST = {'detail': 'Username already exists'}
 MSG_NOT_AUTHENTICATED = {'detail': 'Not authenticated'}
+MSG_SESSION_EXPIRED = {'detail': 'Session has expired'}
 
 
 def _login(client, username):
@@ -203,11 +204,28 @@ def test_health_check(client):
     [
         ("valid", 200, STOCKS),
         ("non-valid", 401, MSG_NOT_VALIDATE_CREDENTIALS),
-        ("not-in-header", 401, MSG_NOT_AUTHENTICATED)
+        ("not-in-header", 401, MSG_NOT_AUTHENTICATED),
+        ("expired", 401, MSG_SESSION_EXPIRED),
+        ("non-exist-user", 401, MSG_NOT_VALIDATE_CREDENTIALS),
+        ("empty-username", 401, MSG_NOT_VALIDATE_CREDENTIALS)
     ]
 )
 def test_stocks(client, login, token, expected, body):
     _, access_token = login if token == "valid" else ('fake', 'fake-token')
+    if token == "empty-username":
+        access_token = create_access_token(
+            data={}, expires_delta=timedelta(minutes=15)
+        )
+    if token == "non-exist-user":
+        access_token = create_access_token(
+            data={"sub": "no-valid-user@email.com"},
+            expires_delta=timedelta(minutes=15)
+        )
+    if token == "expired":
+        access_token = create_access_token(
+            data={"sub": "valid-user@email.com"},
+            expires_delta=timedelta(minutes=-15)
+        )
     response = client.get(
         "/stocks",
         headers={"Authorization": "Bearer {}".format(access_token)}
