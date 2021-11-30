@@ -218,3 +218,20 @@ def test_stocks(client, login, token, expected, body):
 
     assert response.status_code == expected
     assert response.json() == body
+
+
+@mark.parametrize(
+    "stock_id, expected",
+    [
+        ("FB", 200),
+        ("PPPP", 400),
+    ]
+)
+def test_stock_id(client, login, stock_id, expected):
+    _, access_token = login
+    response = client.get(
+        f"/stocks/{stock_id}",
+        headers={"Authorization": "Bearer {}".format(access_token)}
+    )
+
+    assert response.status_code == expected

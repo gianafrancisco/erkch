@@ -14,6 +14,14 @@ class UserExistsException(Exception):
     pass
 
 
+class StockNotFoundException(Exception):
+    pass
+
+
+class StockExistsException(Exception):
+    pass
+
+
 class Database():
     def get(self, id) -> BaseModel:
         pass
@@ -47,12 +55,12 @@ class StockMemoryDB(Database):
 
     def get(self, id) -> Stock:
         if id not in self.__stock:
-            raise UserNotFoundException
+            raise StockNotFoundException
         return self.__stock[id]
 
     def add(self, model: Stock) -> None:
         if model.id in self.__stock:
-            raise UserExistsException
+            raise StockExistsException
         self.__stock[model.id] = model
         return model
 
