@@ -16,13 +16,13 @@ class ThrottlingException(HTTPException):
 
 class RateLimit:
     def __init__(self, count: int,
-                 period: timedelta = timedelta(seconds=1)) -> None:
+                 period: float = 1000) -> None:
         self.count = count
         self.period = period
 
     @property
     def inverse(self) -> float:
-        return self.period.total_seconds() / self.count
+        return self.period / self.count
 
 
 class gcra:
@@ -31,23 +31,24 @@ class gcra:
     Reference: https://smarketshq.com/implementing-gcra-in-python-5df1f11aaa96
     """
 
-    def get_tat(self, key: str) -> datetime:
+    def get_tat(self, key: str) -> float:
         # This should return a previous tat for the key or the current time.
         pass
 
-    def set_tat(self, key: str, tat: datetime) -> None:
+    def set_tat(self, key: str, tat: float) -> None:
         pass
 
     def update(self, key: str, limit: RateLimit) -> bool:
-        now = datetime.utcnow()
+        now = datetime.now().timestamp()
         tat = max(self.get_tat(key), now)
-        separation = (tat - now).total_seconds()
-        max_interval = limit.period.total_seconds() - limit.inverse
+        separation = (tat - now)
+        max_interval = limit.period - limit.inverse
+        # breakpoint()
         if separation > max_interval:
             reject = True
         else:
             reject = False
-            new_tat = max(tat, now) + timedelta(seconds=limit.inverse)
+            new_tat = max(tat, now) + limit.inverse
             self.set_tat(key, new_tat)
         return reject
 
@@ -55,14 +56,14 @@ class gcra:
 class gcraMemory(gcra):
 
     def __init__(self):
-        self.sessions: Dict[str, datetime] = {}
+        self.sessions: Dict[str, float] = {}
 
-    def get_tat(self, key: str) -> datetime:
+    def get_tat(self, key: str) -> float:
         if key not in self.sessions:
-            return datetime.now()
+            return datetime.now().timestamp() - 100
         return self.sessions[key]
 
-    def set_tat(self, key: str, tat: datetime) -> None:
+    def set_tat(self, key: str, tat: float) -> None:
         self.sessions[key] = tat
 
 
