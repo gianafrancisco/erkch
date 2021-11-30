@@ -37,9 +37,6 @@ test-debug:
 		--cov-report html --cov-report term --html=report/report.html \
 		-v --self-contained-html $(tests) 
 
-test: build
-	docker run --rm -it eureka-api:latest pytest test/
-
 clean:
 	docker rmi eureka-api:latest
 	docker rmi $(docker_io_image)
