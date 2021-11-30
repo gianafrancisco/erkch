@@ -51,6 +51,19 @@ MOCK_USER = {
     }
 }
 
+STOCKS = {
+    "FB": {"id": "FB", "name": "Facebook"},
+    "AAPL": {"id": "AAPL", "name": "Apple"},
+    "MSFT": {"id": "MSFT", "name": "Microsoft"},
+    "GOOGL": {"id": "GOOGL", "name": "Google"},
+    "AMZN": {"id": "AMZN", "name": "Amazon"}
+}
+
+MSG_INCORRECT_USR_OR_PASS = {'detail': 'Incorrect username or password'}
+MSG_NOT_VALIDATE_CREDENTIALS = {'detail': 'Could not validate credentials'}
+MSG_USR_EXIST = {'detail': 'Username already exists'}
+MSG_NOT_AUTHENTICATED = {'detail': 'Not authenticated'}
+
 
 def _login(client, username):
     user = MOCK_USER.get(username)
@@ -62,7 +75,7 @@ def _login(client, username):
             }
     )
     assert response.status_code == 200
-    return response.json()['token_type'], response.json()['access_token']
+    return (response.json()['token_type'], response.json()['access_token'])
 
 
 @fixture()
@@ -86,7 +99,7 @@ def create_users():
     "username, status_code, msg",
     [
         ("signup_user@gmail.com", 200, {}),
-        ("signup_user@gmail.com", 400, {'detail': 'Username already exists'}),
+        ("signup_user@gmail.com", 400, MSG_USR_EXIST),
         ("signup_user@gmail.com-missing-data", 422,
             {'detail': [{'loc': ['body', 'first_name'],
              'msg': 'field required', 'type': 'value_error.missing'}]})
@@ -127,7 +140,7 @@ def test_signin(client, create_users, username, password, expected):
 
     assert response.status_code == expected
     if expected == 401:
-        assert response.json() == {'detail': 'Incorrect username or password'}
+        assert response.json() == MSG_INCORRECT_USR_OR_PASS
 
 
 def test_me(client, login):
@@ -147,7 +160,7 @@ def test_me(client, login):
     }
 
 
-# @mark.skip()
+@mark.skip()
 @mark.parametrize(
     "requests, delta, throttling",
     [
@@ -185,3 +198,23 @@ def test_health_check(client):
 
     assert response.status_code == 200
     assert response.json() == {}
+
+
+@mark.parametrize(
+    "token, expected, body",
+    [
+        ("valid", 200, STOCKS),
+        ("non-valid", 401, MSG_NOT_VALIDATE_CREDENTIALS),
+        ("not-in-header", 401, MSG_NOT_AUTHENTICATED)
+    ]
+)
+def test_stocks(client, login, token, expected, body):
+    _, access_token = login if token == "valid" else ('fake', 'fake-token')
+    response = client.get(
+        "/stocks",
+        headers={"Authorization": "Bearer {}".format(access_token)}
+        if token != "not-in-header" else {}
+    )
+
+    assert response.status_code == expected
+    assert response.json() == body
