@@ -1,5 +1,6 @@
 docker_io_image = "fgiana/eureka-api:latest"
 branch = "main"
+tests = "tests"
 
 build: git
 	docker rmi eureka-api:latest || echo ""
@@ -26,13 +27,13 @@ shell:
 	docker run --rm -it -v $(shell pwd):/src -p 18080:8080 eureka-api:latest bash
 
 debug:
-	docker run --rm -it -v $(shell pwd):/src -p 18080:8080 eureka-api:latest uvicorn app.main:app --reload --port 8080 --host 0.0.0.0
+	docker run --rm -it -v $(shell pwd):/src -p 18080:8080 eureka-api:latest uvicorn app.main:app --reload --port 8080 --host 0.0.0.0 --log-level critical
 
 run:
 	docker run --rm -it -p 18080:8080 eureka-api:latest
 
 test-debug:
-	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest -s tests/
+	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest -s $(tests)
 
 test: build
 	docker run --rm -it eureka-api:latest pytest test/
