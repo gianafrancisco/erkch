@@ -17,6 +17,13 @@ MOCK_USER = {
         "email": "signup_user@gmail.com",
         "password": "secret"
     },
+    "signup_user@gmail.com-missing-data": {
+        "username": "signup_user@gmail.com",
+        "first_name": "",
+        "last_name": "Giana",
+        "email": "signup_user@gmail.com-missing-data",
+        "password": "secret"
+    },
     "valid-user@email.com": {
         "username": "valid-user@email.com",
         "first_name": "Francisco",
@@ -75,17 +82,27 @@ def create_users():
     db.add(UserInDB(**MOCK_USER.get('disabled@email.com')))
 
 
-def test_signup(client):
+@mark.parametrize(
+    "username, status_code, msg",
+    [
+        ("signup_user@gmail.com", 200, {}),
+        ("signup_user@gmail.com", 400, {'detail': 'Username already exists'}),
+        ("signup_user@gmail.com-missing-data", 422,
+            {'detail': [{'loc': ['body', 'first_name'],
+             'msg': 'field required', 'type': 'value_error.missing'}]})
+    ]
+)
+def test_signup(client, username, status_code, msg):
 
     response = client.post(
             "/auth/signup",
-            data=MOCK_USER["signup_user@gmail.com"]
+            data=MOCK_USER[username]
         )
 
-    assert response.status_code == 200
-    assert response.json() == {}
+    assert response.status_code == status_code
+    assert response.json() == msg
 
-    token_type, access_token = _login(client, "signup_user@gmail.com")
+    token_type, access_token = _login(client, username)
     assert token_type.lower() == "bearer"
     assert access_token is not None
 
@@ -158,3 +175,12 @@ def test_throttling(client, login, requests, delta, throttling):
     else:
         assert response.status_code == 429
         assert throttling is True
+
+
+def test_health_check(client):
+    response = client.get(
+        "/health_check",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {}
