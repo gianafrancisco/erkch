@@ -112,6 +112,7 @@ def test_signup(client, username, status_code, msg):
     [
         ("non-exist-user", "test1", 401),
         ("valid-user@email.com", "valid-password", 200),
+        ("valid-user@email.com", "non-valid-password", 401),
         ("", "valid-password", 422),
         ("valid-user@email.com", "", 422),
         ("disabled@email.com", "valid-password", 401),
