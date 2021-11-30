@@ -19,9 +19,9 @@ push: build
 	docker push $(docker_io_image)
 
 test:
-	docker run --rm -it -v $(shell pwd):/src eureka-api:latest \
-		python3 -m pytest --cov=src/ --cov-report html --cov-report term --html=report/report.html \
-		-v --self-contained-html tests/
+	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest --cov=app/ \
+		--cov-report html --cov-report term --html=report/report.html \
+		-v --self-contained-html $(tests) 
 
 shell:
 	docker run --rm -it -v $(shell pwd):/src -p 18080:8080 eureka-api:latest bash
@@ -33,7 +33,9 @@ run:
 	docker run --rm -it -p 18080:8080 eureka-api:latest
 
 test-debug:
-	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest -s $(tests)
+	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest --cov=app/ \
+		--cov-report html --cov-report term --html=report/report.html \
+		-v --self-contained-html $(tests) 
 
 test: build
 	docker run --rm -it eureka-api:latest pytest test/
