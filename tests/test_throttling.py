@@ -13,9 +13,8 @@ from app.helper.throttling import RateLimit, gcraMemory
         (2, 1, 1, True),
         (6, 10, 5, True),
         (1, 1, 1, False),
-        (4, 10, 5, False)
+        (4, 10, 5, False),
         (5, 10, 5, False)
-        
     ]
 )
 def test_rate_limit(requests, delta, limit, expected):
