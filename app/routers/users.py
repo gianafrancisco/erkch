@@ -45,21 +45,22 @@ async def signin_users(request: Request,
         user = db.get(form_data.username)
     except UserNotFoundException:
         logger.warning(f"{request.client.host} - "
-                       f"Username {user.username} not found")
+                       f"Username {form_data.username} not found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
     if not verify_password(form_data.password, user.hashed_password):
         logger.warning(f"{request.client.host} - "
-                       f"Username {user.username} password mismatch")
+                       f"Username {form_data.username} password mismatch")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
+        data={"sub": form_data.username}, expires_delta=access_token_expires
     )
-    logger.info(f"{request.client.host} - Username {user.username} logged in")
+    logger.info(f"{request.client.host} - "
+                f"Username {form_data.username} logged in")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
