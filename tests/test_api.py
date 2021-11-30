@@ -95,6 +95,9 @@ def test_signup(client):
     [
         ("non-exist-user", "test1", 401),
         ("valid-user@email.com", "valid-password", 200),
+        ("", "valid-password", 422),
+        ("valid-user@email.com", "", 422),
+        ("disabled@email.com", "valid-password", 401),
     ]
 )
 def test_signin(client, create_users, username, password, expected):
