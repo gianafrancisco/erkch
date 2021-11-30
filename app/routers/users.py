@@ -1,6 +1,7 @@
+from logging import getLogger
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.models.user import User, UserInDB, SignUpForm
@@ -10,6 +11,7 @@ from app.helper.auth import get_current_user
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.helper.database import db, UserExistsException, UserNotFoundException
 
+logger = getLogger(__name__)
 
 fake_users_db = {
     "gianafrancisco@gmail.com": {
@@ -36,15 +38,20 @@ async def get_current_active_user(
 
 
 @router.post("/auth/signin")
-async def signin_users(form_data: OAuth2PasswordRequestForm = Depends()):
+async def signin_users(request: Request,
+                       form_data: OAuth2PasswordRequestForm = Depends()):
     user: User = None
     try:
         user = db.get(form_data.username)
     except UserNotFoundException:
+        logger.warning(f"{request.client.host} - "
+                       f"Username {user.username} not found")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
     if not verify_password(form_data.password, user.hashed_password):
+        logger.warning(f"{request.client.host} - "
+                       f"Username {user.username} password mismatch")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Incorrect username or password")
 
@@ -52,6 +59,7 @@ async def signin_users(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+    logger.info(f"{request.client.host} - Username {user.username} logged in")
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -63,7 +71,8 @@ async def read_users_me(current_user: UserInDB = Depends(
 
 
 @router.post("/auth/signup")
-async def signup_users(form_data: SignUpForm = Depends()):
+async def signup_users(request: Request,
+                       form_data: SignUpForm = Depends()):
     user = {
         "username": form_data.email,
         "email": form_data.email,
@@ -75,7 +84,11 @@ async def signup_users(form_data: SignUpForm = Depends()):
     try:
         db.add(UserInDB(**user))
     except UserExistsException:
+        logger.warning(f"{request.client.host} - "
+                       f"Username {form_data.email} already exists")
         raise HTTPException(status_code=400, detail="Username already exists")
+    logger.warning(f"{request.client.host} - "
+                   f"Username {form_data.email} has been created")
     return {}
 
 
