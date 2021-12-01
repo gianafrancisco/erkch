@@ -1,7 +1,11 @@
+import re
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from fastapi import Form
+from fastapi.exceptions import HTTPException
+
+REGEXP_EMAIL = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
 
 
 class User(BaseModel):
@@ -10,6 +14,14 @@ class User(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     disabled: Optional[bool] = None
+
+    @validator('email')
+    def email_validation(cls, value, values, config, field):
+        if not re.fullmatch(REGEXP_EMAIL, value):
+            raise HTTPException(
+                status_code=422,
+                detail='Email is not a valid email address')
+        return value
 
 
 class UserInDB(User):

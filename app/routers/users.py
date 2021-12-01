@@ -93,7 +93,9 @@ async def signup_users(request: Request,
     except UserExistsException:
         logger.warning(f"{request.client.host} - "
                        f"Username {form_data.email} already exists")
-        raise HTTPException(status_code=400, detail="Username already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                            detail="Username already exists")
+
     logger.warning(f"{request.client.host} - "
                    f"Username {form_data.email} has been created")
     return {}

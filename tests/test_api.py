@@ -17,6 +17,13 @@ MOCK_USER = {
         "email": "signup_user@gmail.com",
         "password": "secret"
     },
+    "not-valid-user-email": {
+        "username": "signup_user_gmail.com",
+        "first_name": "Francisco",
+        "last_name": "Giana",
+        "email": "signup_user_gmail.com",
+        "password": "secret"
+    },
     "signup_user@gmail.com-missing-data": {
         "username": "signup_user@gmail.com",
         "first_name": "",
@@ -103,7 +110,9 @@ def create_users():
         ("signup_user@gmail.com", 400, MSG_USR_EXIST),
         ("signup_user@gmail.com-missing-data", 422,
             {'detail': [{'loc': ['body', 'first_name'],
-             'msg': 'field required', 'type': 'value_error.missing'}]})
+             'msg': 'field required', 'type': 'value_error.missing'}]}),
+        ("not-valid-user-email", 422,
+            {'detail': 'Email is not a valid email address'})
     ]
 )
 def test_signup(client, username, status_code, msg):
@@ -116,9 +125,10 @@ def test_signup(client, username, status_code, msg):
     assert response.status_code == status_code
     assert response.json() == msg
 
-    token_type, access_token = _login(client, username)
-    assert token_type.lower() == "bearer"
-    assert access_token is not None
+    if status_code == 200:
+        token_type, access_token = _login(client, username)
+        assert token_type.lower() == "bearer"
+        assert access_token is not None
 
 
 @mark.parametrize(
