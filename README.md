@@ -76,6 +76,13 @@ Endpoints:
 
 '''
 
+## Improvements
+
+- Integrate an external database to persist the users.
+- Horinzontal scaling will be supported if external database is implemented.
+- Implements Token Bucket algorithm for throttling, right now it implement a Generic Cell Rate Algorithm to allow a constant request rate, for instance, 4 request per second.
+- By default when user signup it will be enabled, a good practice would be to send an email with a link to validate the user and activate it. Using services line SNS or SES from AWS or SendInBlue we can solve it, but I consider it out of scope for this code challenge.
+
 '''
 
 ---
