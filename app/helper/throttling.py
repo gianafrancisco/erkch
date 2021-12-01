@@ -43,7 +43,6 @@ class gcra:
         tat = max(self.get_tat(key), now)
         separation = (tat - now)
         max_interval = limit.period - limit.inverse
-        # breakpoint()
         if separation > max_interval:
             reject = True
         else:
