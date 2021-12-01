@@ -15,13 +15,9 @@ git:
 
 push: build
 	docker login
-	docker tag eureka-api:latest $(docker_io_image)
-	docker push $(docker_io_image)
-
-test:
-	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest --cov=app/ \
-		--cov-report html --cov-report term --html=report/report.html \
-		-v --self-contained-html $(tests) 
+	DOCKER_USER=$(docker info | grep "Username" | awk -F: '{print $NF}')
+	docker tag eureka-api:latest ${DOCKER_USER}$(docker_io_image)
+	docker push ${DOCKER_USER}$(docker_io_image)
 
 shell:
 	docker run --rm -it -v $(shell pwd):/src -p 18080:8080 eureka-api:latest bash
@@ -32,12 +28,20 @@ debug:
 run:
 	docker run --rm -it -p 18080:8080 eureka-api:latest
 
-test-debug:
+test:
 	docker run --rm -it -v $(shell pwd):/src eureka-api:latest python3 -m pytest --cov=app/ \
 		--cov-report html --cov-report term --html=report/report.html \
-		-v --self-contained-html $(tests) 
+		-v --self-contained-html $(tests)
+
+test-in-docker:
+	docker run -u root --rm -it eureka-api:latest python3 -m pytest --cov=app/ \
+		--cov-report term  \
+		-v --self-contained-html $(tests)
 
 clean:
-	docker rmi eureka-api:latest
-	docker rmi $(docker_io_image)
-	rm -f environment/app.*
+	docker rmi eureka-api:latest || true
+	docker login
+	DOCKER_USER=$(docker info | grep "Username" | awk -F: '{print $NF}')
+	docker rmi ${DOCKER_USER}$(docker_io_image) || true
+	rm -f environment/app.* || true
+	rm -rf report htmlcov || true
